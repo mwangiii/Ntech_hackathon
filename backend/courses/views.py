@@ -17,7 +17,7 @@ from django.views.generic import (
 )
 from django.views.generic.base import TemplateResponseMixin
 from braces.views import CsrfExemptMixin, JsonRequestResponseMixin
-from .forms import CourseEnrollForm, ModuleFormSet
+from .forms import ModuleFormSet
 from .models import Course, Module, Content, Subject
 from students.forms import CourseEnrollForm
 
@@ -150,6 +150,7 @@ class ContentOrderView(CsrfExemptMixin, JsonRequestResponseMixin, View):
                 order=order
             )
         return self.render_json_response({"saved": "OK"})
+
 
 
 class CourseListView(View):
