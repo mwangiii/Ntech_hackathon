@@ -1,15 +1,15 @@
 from django.urls import path
 
 from .views import (
-    FetchAllNotifications,
-    FetchUnreadNotifications,
-    MarkAllNotificationsAsRead,
+    fetch_all_notifications,
+    fetch_unread_notifications,
+    mark_all_notifications_as_read,
 )
 
 app_name = "notifications"
 
 urlpatterns = [
-    path("all/", FetchAllNotifications.as_view(), name="list"),
-    path("unread/", FetchUnreadNotifications.as_view(), name="unread"),
-    path("mark/", MarkAllNotificationsAsRead.as_view(), name="mark"),
+    path("all/", fetch_all_notifications, name="list"),
+    path("unread/", fetch_unread_notifications, name="unread"),
+    path("mark/", mark_all_notifications_as_read, name="mark"),
 ]
