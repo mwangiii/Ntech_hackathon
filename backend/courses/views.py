@@ -24,12 +24,10 @@ from .models import Course, Module, Content, Subject
 from students.forms import CourseEnrollForm
 
 
-# Owner mixin for filtering by user
 def get_owner_queryset(queryset, user):
     return queryset.filter(owner=user)
 
 
-# Manage Course List View
 @login_required
 @permission_required("courses.view_course")
 def manage_course_list_view(request):
@@ -37,7 +35,6 @@ def manage_course_list_view(request):
     return JsonResponse({"courses": list(courses.values())})
 
 
-# Course Create View
 @login_required
 @permission_required("courses.add_course")
 def course_create_view(request):
@@ -57,7 +54,6 @@ def course_create_view(request):
     return JsonResponse({"formset": formset.errors})
 
 
-# Course Update View
 @login_required
 @permission_required("courses.change_course")
 def course_update_view(request, pk):
@@ -73,7 +69,6 @@ def course_update_view(request, pk):
     return JsonResponse({"formset": formset.errors})
 
 
-# Course Delete View
 @login_required
 @permission_required("courses.delete_course")
 def course_delete_view(request, pk):
@@ -82,7 +77,6 @@ def course_delete_view(request, pk):
     return JsonResponse({"success": True, "redirect": "manage_course_list"})
 
 
-# Course Module Update View
 @login_required
 def course_module_update_view(request, pk):
     course = get_object_or_404(Course, id=pk, owner=request.user)
@@ -96,7 +90,6 @@ def course_module_update_view(request, pk):
     return JsonResponse({"formset": formset.errors})
 
 
-# Content Create/Update View
 @login_required
 def content_create_update_view(request, module_id, model_name, id=None):
     module = get_object_or_404(Module, id=module_id, course__owner=request.user)
@@ -128,7 +121,6 @@ def content_create_update_view(request, module_id, model_name, id=None):
     return JsonResponse({"form": form.errors})
 
 
-# Content Delete View
 @login_required
 def content_delete_view(request, id):
     content = get_object_or_404(Content, id=id, module__course__owner=request.user)
@@ -140,14 +132,12 @@ def content_delete_view(request, id):
     )
 
 
-# Module Content List View
 @login_required
 def module_content_list_view(request, module_id):
     module = get_object_or_404(Module, id=module_id, course__owner=request.user)
     return JsonResponse({"module": module})
 
 
-# Module Order View
 @login_required
 def module_order_view(request):
     if request.method == "POST":
@@ -156,7 +146,6 @@ def module_order_view(request):
         return JsonResponse({"saved": "OK"})
 
 
-# Content Order View
 @login_required
 def content_order_view(request):
     if request.method == "POST":
@@ -167,7 +156,6 @@ def content_order_view(request):
         return JsonResponse({"saved": "OK"})
 
 
-# Course List View
 def course_list_view(request):
     all_courses = Course.objects.annotate(total_modules=Count("modules"))
     subject = request.GET.get("subject")
@@ -189,7 +177,6 @@ def course_list_view(request):
     )
 
 
-# Course Detail View
 def course_detail_view(request, pk):
     course = get_object_or_404(Course, pk=pk)
     enroll_form = CourseEnrollForm(initial={"course": course})
@@ -201,6 +188,6 @@ def course_detail_view(request, pk):
                 "overview": course.overview,
                 # Add other course fields as needed
             },
-            "enroll_form": enroll_form.as_p(),  # Or serialize as needed for React
+            "enroll_form": enroll_form.as_p(),  
         }
     )
