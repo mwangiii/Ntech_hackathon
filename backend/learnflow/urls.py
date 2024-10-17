@@ -19,7 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
-from courses.views import CourseListView
+from courses.views import course_list_view
 
 
 urlpatterns = [
@@ -27,9 +27,9 @@ urlpatterns = [
     path("accounts/logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("admin/", admin.site.urls),
     path("course/", include("courses.urls")),
-    path("", CourseListView.as_view(), name="course_list"),
+    path("", course_list_view, name="course_list"),
     path("students/", include("students.urls")),
-    path("api/", include("courses.api.urls", namespace="api")),
+    path("api/", include("courses.api.urls", namespace="courses")),
     path("chat/", include("chat.urls", namespace="chat")),
     path("__debug__/", include("debug_toolbar.urls")),
 ]
