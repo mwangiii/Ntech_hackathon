@@ -1,59 +1,68 @@
 from django.urls import reverse_lazy
-from django.views.generic.edit import CreateView, FormView
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate, login
-from django.views.generic.list import ListView
-from django.views.generic.detail import DetailView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from courses.models import Course
 from .forms import CourseEnrollForm
 
-
-class StudentRegistrationView(CreateView):
-    form_class = UserCreationForm
-    success_url = reverse_lazy("student_course_list")
-
-    def form_valid(self, form):
-        result = super().form_valid(form)
-        cd = form.cleaned_data
-        user = authenticate(username=cd["username"], password=cd["password1"])
-        login(self.request, user)
-        return result
-
-
-class StudentEnrollCourseView(LoginRequiredMixin, FormView):
-    course = None
-    form_class = CourseEnrollForm
-
-    def form_valid(self, form):
-        self.course = form.cleaned_data["course"]
-        self.course.students.add(self.request.user)
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse_lazy("student_course_detail", args=[self.course.id])
-
-
-class StudentCourseListView(LoginRequiredMixin, ListView):
-    model = Course
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        return qs.filter(students__in=[self.request.user])
-
-
-class StudentCourseDetailView(LoginRequiredMixin, DetailView):
-    model = Course
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        return qs.filter(students__in=[self.request.user])
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        course = self.get_object()
-        if "module_id" in self.kwargs:
-            context["module"] = course.modules.get(id=self.kwargs["module_id"])
+# Student Registration View
+def student_registration_view(request):
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            authenticate(username=user.username, password=form.cleaned_data["password1"])
+            login(request, user)
+            return JsonResponse({'success': True, 'redirect': reverse_lazy("student_course_list")})
         else:
-            context["module"] = course.modules.all()[0]
-        return context
+            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+    else:
+        form = UserCreationForm()
+    
+    return JsonResponse({'form': form.errors})  # For GET request, show empty form errors
+
+# Student Enroll Course View
+@login_required
+def student_enroll_course_view(request):
+    if request.method == "POST":
+        form = CourseEnrollForm(request.POST)
+        if form.is_valid():
+            course = form.cleaned_data["course"]
+            course.students.add(request.user)
+            return JsonResponse({'success': True, 'redirect': reverse_lazy("student_course_detail", args=[course.id])})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+    else:
+        form = CourseEnrollForm()
+    
+    return JsonResponse({'form': form.errors})  # For GET request, show empty form errors
+
+# Student Course List View
+@login_required
+def student_course_list_view(request):
+    courses = Course.objects.filter(students=request.user).values()  # Use values() for a simple JSON response
+    return JsonResponse({'courses': list(courses)})
+
+# Student Course Detail View
+@login_required
+def student_course_detail_view(request, pk, module_id=None):
+    course = get_object_or_404(Course, pk=pk, students=request.user)
+    module = course.modules.get(id=module_id) if module_id else course.modules.first()
+
+    response_data = {
+        "course": {
+            "id": course.id,
+            "name": course.name,
+            "description": course.description,
+            # Add other course fields as needed
+        },
+        "module": {
+            "id": module.id,
+            "name": module.name,
+            # Add other module fields as needed
+        } if module else None,
+    }
+    
+    return JsonResponse(response_data)
